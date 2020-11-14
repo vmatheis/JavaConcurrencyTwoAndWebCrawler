@@ -63,6 +63,7 @@ public class LinkFinderAction extends RecursiveAction {
                     list = parser.extractAllNodesThatMatch(filter);
                     for (int i = 0; i < list.size(); i++) {
                         recAct.add(new LinkFinderAction(list.elementAt(i).toHtml(), cr));
+                        //System.out.println(list.elementAt(i).toHtml());
                     }
                 } catch (ParserException e) {
                     e.printStackTrace();

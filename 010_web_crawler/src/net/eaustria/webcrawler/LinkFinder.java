@@ -16,6 +16,11 @@ import org.htmlparser.tags.LinkTag;
 import org.htmlparser.util.NodeList;
 import java.util.ArrayList;
 import java.util.List;
+import static java.util.concurrent.ForkJoinTask.invokeAll;
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
+import org.htmlparser.filters.AndFilter;
+import org.htmlparser.util.ParserException;
 
 public class LinkFinder implements Runnable {
 
@@ -37,19 +42,42 @@ public class LinkFinder implements Runnable {
     }
 
     private void getSimpleLinks(String url) {
-        // 4. If size of link handler equals 500 
+        // If size of link handler equals 500 -> else
         if (linkHandler.size() != 500) {
             // 1. if url not already visited, visit url with linkHandler
             if (!linkHandler.visited(url)) {
-                // 2. get url and Parse Website
-                String website = Parser.createParser(url, url).getURL();
-                // 3. extract all URLs and add url to list of urls which should be visited only if link is not empty and url has not been visited before
-                
+                List<LinkFinder> recAct = new ArrayList<>();
+                // get url and Parse Website
+                Parser parser;
+                NodeFilter filter;
+                NodeList list;
+                filter = new NodeClassFilter(LinkTag.class);
+                if (1 < linkHandler.size()) {
+                    filter = new AndFilter(
+                            filter,
+                            new NodeFilter() {
+                        public boolean accept(Node node) {
+                            return (((LinkTag) node).isMailLink());
+                        }
+                    });
+                }
+                try {
+                    parser = new Parser(url);
+                    list = parser.extractAllNodesThatMatch(filter);
+                    //extract all URLs and add url to list of urls which should be visited only if link is not empty and url has not been visited before
+                    for (int i = 0; i < list.size(); i++) {
+                        recAct.add(new LinkFinder(list.elementAt(i).toHtml(), linkHandler));
+                        //System.out.println(list.elementAt(i).toHtml());
+                    }
+                } catch (ParserException e) {
+                    e.printStackTrace();
+                }
+                linkHandler.addVisited(url);
 
             }
-        } else {
-            // 4. print time elapsed for statistics
+        } // print time elapsed for statistics
+        else {
+            System.out.println("elapsed time for statistics: " + (System.nanoTime() - t0));
         }
-
     }
 }
