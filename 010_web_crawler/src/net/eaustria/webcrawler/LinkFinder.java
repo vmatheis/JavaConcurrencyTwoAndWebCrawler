@@ -37,16 +37,19 @@ public class LinkFinder implements Runnable {
     }
 
     private void getSimpleLinks(String url) {
-        // 1. if url not already visited, visit url with linkHandler
-        if(!linkHandler.visited(url)){
-            
+        // 4. If size of link handler equals 500 
+        if (linkHandler.size() != 500) {
+            // 1. if url not already visited, visit url with linkHandler
+            if (!linkHandler.visited(url)) {
+                // 2. get url and Parse Website
+                String website = Parser.createParser(url, url).getURL();
+                // 3. extract all URLs and add url to list of urls which should be visited only if link is not empty and url has not been visited before
+                
+
+            }
+        } else {
+            // 4. print time elapsed for statistics
         }
-        
-        // 2. get url and Parse Website
-        // 3. extract all URLs and add url to list of urls which should be visited
-        //    only if link is not empty and url has not been visited before
-        // 4. If size of link handler equals 500 -> print time elapsed for statistics               
-        
+
     }
 }
-

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.ForkJoinPool;
+import sun.awt.image.ImageWatched;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -28,7 +29,8 @@ public class WebCrawler7 implements ILinkHandler {
     }
 
     private void startCrawling() {        
-        // ToDo: Invoke LinkFinderAction on threadpool        
+        LinkFinderAction lfa = new LinkFinderAction(url, this);
+        mainPool.invoke(lfa);      
     }
 
     @Override

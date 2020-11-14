@@ -5,22 +5,23 @@
  */
 package net.eaustria.webcrawler;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.RecursiveAction;
+import org.htmlparser.Node;
+import org.htmlparser.NodeFilter;
 import org.htmlparser.Parser;
+import org.htmlparser.filters.AndFilter;
 import org.htmlparser.filters.NodeClassFilter;
 import org.htmlparser.tags.LinkTag;
 import org.htmlparser.util.NodeList;
+import org.htmlparser.util.ParserException;
 
 /**
  *
  * @author bmayr
  */
-
 // Recursive Action for forkJoinFramework from Java7
-
 public class LinkFinderAction extends RecursiveAction {
 
     private String url;
@@ -37,19 +38,42 @@ public class LinkFinderAction extends RecursiveAction {
 
     @Override
     public void compute() {
-        // 1. if crawler has not visited url yet:
-        if(!cr.visited(url)){
-            // 2. Create new list of recursiveActions
-            List<RecursiveAction> recAct = new ArrayList<>();
-            
+        // if size of crawler exceeds 500 
+        if (cr.size() <= 500) {
+            // if crawler has not visited url yet:
+            if (!cr.visited(url)) {
+                // Create new list of recursiveActions
+                List<LinkFinderAction> recAct = new ArrayList<>();
+                // extract all links from url
+                Parser parser;
+                NodeFilter filter;
+                NodeList list;
+                filter = new NodeClassFilter(LinkTag.class);
+                if (1 < cr.size()) {
+                    filter = new AndFilter(
+                            filter,
+                            new NodeFilter() {
+                        public boolean accept(Node node) {
+                            return (((LinkTag) node).isMailLink());
+                        }
+                    });
+                }
+                try {
+                    parser = new Parser(url);
+                    list = parser.extractAllNodesThatMatch(filter);
+                    for (int i = 0; i < list.size(); i++) {
+                        recAct.add(new LinkFinderAction(list.elementAt(i).toHtml(), cr));
+                    }
+                } catch (ParserException e) {
+                    e.printStackTrace();
+                }
+                cr.addVisited(url);
+                // Do not forget to call ìnvokeAll on the actions!     
+                invokeAll(recAct);
+            }
+        } // print elapsed time for statistics
+        else {
+            System.out.println("elapsed time for statistics: " + (System.nanoTime() - t0));
         }
-        
-        
-        // 3. Parse url
-        // 4. extract all links from url
-        // 5. add new Action for each sublink
-        // 6. if size of crawler exceeds 500 -> print elapsed time for statistics
-        // -> Do not forget to call ìnvokeAll on the actions!      
     }
 }
-
