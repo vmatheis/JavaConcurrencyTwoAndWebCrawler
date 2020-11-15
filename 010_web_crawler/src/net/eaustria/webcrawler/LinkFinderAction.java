@@ -8,6 +8,8 @@ package net.eaustria.webcrawler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.RecursiveAction;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.htmlparser.Node;
 import org.htmlparser.NodeFilter;
 import org.htmlparser.Parser;
@@ -38,23 +40,22 @@ public class LinkFinderAction extends RecursiveAction {
 
     @Override
     public void compute() {
-        // if size of crawler exceeds 500 
-        if (cr.size() <= 500) {
-            // if crawler has not visited url yet:
+        // if size of crawler exceeds 100 
+        if (cr.size() <= 100) {
+            // if crawler has not visited url yet
             if (!cr.visited(url)) {
                 // Create new list of recursiveActions
                 List<LinkFinderAction> recAct = new ArrayList<>();
                 // extract all links from url
                 Parser parser;
-                NodeFilter filter;
+                NodeFilter filter = new NodeClassFilter(LinkTag.class);
                 NodeList list;
-                filter = new NodeClassFilter(LinkTag.class);
-                if (1 < cr.size()) {
+                if (0 <= cr.size()) {
                     filter = new AndFilter(
                             filter,
                             new NodeFilter() {
                         public boolean accept(Node node) {
-                            return (((LinkTag) node).isMailLink());
+                            return (((LinkTag) node).isHTTPSLink());
                         }
                     });
                 }
@@ -62,19 +63,24 @@ public class LinkFinderAction extends RecursiveAction {
                     parser = new Parser(url);
                     list = parser.extractAllNodesThatMatch(filter);
                     for (int i = 0; i < list.size(); i++) {
-                        recAct.add(new LinkFinderAction(list.elementAt(i).toHtml(), cr));
-                        //System.out.println(list.elementAt(i).toHtml());
+                        Node currentLinkNode = list.elementAt(i);
+                        if (currentLinkNode instanceof LinkTag) {
+                            LinkTag lt = (LinkTag) currentLinkNode;
+                            recAct.add(new LinkFinderAction(lt.getLink(), cr));
+                        }
                     }
-                } catch (ParserException e) {
-                    e.printStackTrace();
+                    cr.addVisited(url);
+                    // Do not forget to call ìnvokeAll on the actions!     
+                    invokeAll(recAct);
+                } catch (ParserException ex) {
+                    Logger.getLogger(LinkFinderAction.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                cr.addVisited(url);
-                // Do not forget to call ìnvokeAll on the actions!     
-                invokeAll(recAct);
+
             }
         } // print elapsed time for statistics
         else {
             System.out.println("elapsed time for statistics: " + (System.nanoTime() - t0));
+            System.exit(0);
         }
     }
 }

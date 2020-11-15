@@ -49,9 +49,8 @@ public class WebCrawler6 implements ILinkHandler {
 
     private void startNewThread(String link) throws Exception {
         // ToDo: Use executer Service to start new LinkFinder Task!
-        LinkFinder lf = new LinkFinder(url, this);
-        execService.execute(lf);
-        execService.shutdown();
+        execService.execute(new LinkFinder(link, this));
+//        execService.shutdown(); wenn hingeschrieben -> exception
     }
 
     private void startCrawling() throws Exception {        
